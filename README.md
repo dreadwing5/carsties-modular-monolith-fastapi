@@ -184,6 +184,9 @@ The [`docs/`](docs/README.md) folder has guides for the next steps:
 [OpenTelemetry](docs/observability-opentelemetry.md) ·
 [logging practices](docs/logging.md) ·
 [an automatic auditing layer](docs/auditing.md) ·
+[authorization & permission levels](docs/authorization.md) ·
+[real-time updates with SSE](docs/realtime-sse.md) ·
+[Azure integration (Functions, Cosmos DB, Blob Storage)](docs/azure-integration.md) ·
 [why there's no repository pattern](docs/repository-pattern.md).
 
 ## Troubleshooting
