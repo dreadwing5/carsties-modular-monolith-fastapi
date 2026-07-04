@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:17
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_PASSWORD: postgrespw
+      POSTGRES_DB: auctions
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodata:/data/db
+
+  # ≈ Carsties.IdentityService (Duende IdentityServer). Keycloak plays the
+  # external OIDC provider; the app only validates its JWTs.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: start-dev --import-realm
+    ports:
+      - 5001:8080
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+
+volumes:
+  pgdata:
+  mongodata:

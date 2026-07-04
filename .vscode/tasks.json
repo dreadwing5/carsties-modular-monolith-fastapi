@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "infra: docker compose up",
+      "type": "shell",
+      "command": "docker compose up -d",
+      "problemMatcher": []
+    },
+    {
+      "label": "infra: docker compose down",
+      "type": "shell",
+      "command": "docker compose down",
+      "problemMatcher": []
+    },
+    {
+      "label": "run: api",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python -m uvicorn carsties.main:app --reload --port 8000",
+      "problemMatcher": []
+    },
+    {
+      "label": "check: architecture (import-linter)",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/lint-imports",
+      "problemMatcher": []
+    },
+    {
+      "label": "check: ruff",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/ruff check .",
+      "problemMatcher": []
+    },
+    {
+      "label": "check: mypy",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python -m mypy src",
+      "problemMatcher": []
+    },
+    {
+      "label": "check: pytest",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python -m pytest -q",
+      "problemMatcher": [],
+      "group": { "kind": "test", "isDefault": true }
+    },
+    {
+      "label": "check: all",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "check: architecture (import-linter)",
+        "check: ruff",
+        "check: mypy",
+        "check: pytest"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+"""≈ EF Core DbContext plumbing — async engine, session factory, declarative Base."""
+
+from collections.abc import AsyncIterator
+
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import DeclarativeBase
+
+from carsties.shared.settings import get_settings
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+_engine: AsyncEngine | None = None
+_session_factory: async_sessionmaker[AsyncSession] | None = None
+
+
+def get_engine() -> AsyncEngine:
+    global _engine, _session_factory
+    if _engine is None:
+        _engine = create_async_engine(get_settings().database_url)
+        _session_factory = async_sessionmaker(_engine, expire_on_commit=False)
+    return _engine
+
+
+def get_session_factory() -> async_sessionmaker[AsyncSession]:
+    get_engine()
+    assert _session_factory is not None
+    return _session_factory
+
+
+async def get_session() -> AsyncIterator[AsyncSession]:
+    """FastAPI dependency — one session per request (≈ scoped DbContext)."""
+    async with get_session_factory()() as session:
+        yield session
+
+
+async def dispose_engine() -> None:
+    global _engine, _session_factory
+    if _engine is not None:
+        await _engine.dispose()
+        _engine = None
+        _session_factory = None

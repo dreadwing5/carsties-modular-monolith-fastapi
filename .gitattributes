@@ -1,0 +1,12 @@
+# Normalize line endings: store LF in the repo, keep LF on checkout too
+# (Python, ruff and docker are all happy with LF on Windows)
+* text=auto eol=lf
+
+# Windows scripts that genuinely need CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary
+*.png binary
+*.jpg binary
+*.ico binary

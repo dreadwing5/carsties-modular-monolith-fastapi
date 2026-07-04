@@ -1,0 +1,40 @@
+[importlinter]
+root_package = carsties
+
+; ≈ the .NET project-reference graph: modules may not import each other's
+; internals — only contract.py (the "IntegrationEvents / public API" surface).
+[importlinter:contract:module-independence]
+name = Modules are independent (contract.py only)
+type = independence
+modules =
+    carsties.modules.auctions
+    carsties.modules.search
+ignore_imports =
+    carsties.modules.search.** -> carsties.modules.auctions.contract
+
+; Clean Architecture layering inside the auctions module.
+[importlinter:contract:auctions-layers]
+name = Auctions layered architecture
+type = layers
+layers =
+    carsties.modules.auctions.api
+    carsties.modules.auctions.application
+    carsties.modules.auctions.infrastructure
+    carsties.modules.auctions.domain
+
+[importlinter:contract:search-layers]
+name = Search layered architecture
+type = layers
+layers =
+    carsties.modules.search.api
+    carsties.modules.search.application
+    carsties.modules.search.infrastructure
+
+; Shared kernel must not depend on any module.
+[importlinter:contract:shared-is-independent]
+name = Shared kernel does not import modules
+type = forbidden
+source_modules =
+    carsties.shared
+forbidden_modules =
+    carsties.modules
