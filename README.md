@@ -13,6 +13,7 @@ module back out to a microservice later is mechanical.
 | `Carsties.AuctionService` | `modules/auctions` | FastAPI router + SQLAlchemy (Postgres `auctions` schema) + Alembic; outbox table + poller replaces the MassTransit EF outbox |
 | `Carsties.SearchService` | `modules/search` | MongoDB read model; consumers subscribe to the in-process event bus instead of RabbitMQ |
 | `Carsties.IdentityService` (Duende) | Keycloak container | External OIDC provider; the app only validates its JWTs (`shared/auth.py`) |
+| `Carsties.GatewayService` (YARP) | `src/carsties/gateway.py` | Same public route table as YARP, as an ASGI middleware: path rewrite + bearer-required on writes, no network hop |
 | `Carsties.Contracts` | each module's `contract.py` | The only file other modules may import — enforced by import-linter |
 | MassTransit + RabbitMQ | `shared/events.py` | In-process pub/sub with retries and `Fault` publishing; swap for FastStream/RabbitMQ to go back to microservices |
 
@@ -102,6 +103,20 @@ Public endpoints:
 curl http://localhost:8000/api/auctions
 curl "http://localhost:8000/api/search?searchTerm=ford&orderBy=make&pageSize=10"
 curl http://localhost:8000/health
+```
+
+The **gateway routes** (≈ the YARP GatewayService — what a frontend would call)
+are served by the same app:
+
+| Route | Methods | Forwards to | Auth |
+|---|---|---|---|
+| `/auctions/**` | GET | `/api/auctions/**` | anonymous |
+| `/auctions/**` | POST, PUT, DELETE | `/api/auctions/**` | bearer token required at the edge |
+| `/search/**` | GET | `/api/search/**` | anonymous |
+
+```bash
+curl http://localhost:8000/auctions
+curl "http://localhost:8000/search?searchTerm=ford"
 ```
 
 Get a token (same resource-owner-password flow the .NET version exposed for

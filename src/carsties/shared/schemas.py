@@ -1,4 +1,3 @@
-"""Shared API schema base — camelCase wire format matching the .NET JSON."""
 
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel

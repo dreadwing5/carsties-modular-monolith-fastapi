@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from carsties.gateway import GatewayMiddleware
 from carsties.modules.auctions.api.router import router as auctions_router
 from carsties.modules.auctions.application.consumers import (
     register_consumers as register_auctions_consumers,
@@ -60,6 +61,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Carsties", lifespan=lifespan)
+
+# ≈ Carsties.GatewayService (YARP): public /auctions and /search routes
+app.add_middleware(GatewayMiddleware)
 
 app.include_router(auctions_router)
 app.include_router(search_router)
