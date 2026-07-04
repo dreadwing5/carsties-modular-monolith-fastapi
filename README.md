@@ -167,6 +167,14 @@ Settings load from environment variables (prefix `CARSTIES_`) or a `.env` file �
 see [`.env.example`](.env.example). Defaults match `docker-compose.yml`, so no
 `.env` is needed for local development.
 
+## Further reading
+
+The [`docs/`](docs/README.md) folder has guides for the next steps:
+[OpenTelemetry](docs/observability-opentelemetry.md) ·
+[logging practices](docs/logging.md) ·
+[an automatic auditing layer](docs/auditing.md) ·
+[why there's no repository pattern](docs/repository-pattern.md).
+
 ## Troubleshooting
 
 - **`invalid_scope` from Keycloak** — the realm didn't import (e.g. the container
