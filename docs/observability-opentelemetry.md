@@ -1,9 +1,8 @@
 # OpenTelemetry in the Carsties Monolith
 
-In .NET you'd call `builder.Services.AddOpenTelemetry().WithTracing(...)` and get
-ASP.NET Core, HttpClient and EF Core spans for free. Python has the same
-auto-instrumentation story — one setup call in `main.py` plus one instrumentation
-package per library.
+OpenTelemetry's Python SDK has a strong auto-instrumentation story — one setup
+call in `main.py` plus one instrumentation package per library gets you HTTP,
+SQL and Mongo spans for free.
 
 ## 1. Dependencies
 
@@ -20,21 +19,21 @@ dependencies = [
 ]
 ```
 
-| .NET package | Python package |
+| Package | What it instruments |
 |---|---|
-| `OpenTelemetry.Instrumentation.AspNetCore` | `opentelemetry-instrumentation-fastapi` |
-| `OpenTelemetry.Instrumentation.EntityFrameworkCore` | `opentelemetry-instrumentation-sqlalchemy` |
-| `OpenTelemetry.Instrumentation.Http` | `opentelemetry-instrumentation-httpx` |
-| `OpenTelemetry.Exporter.OpenTelemetryProtocol` | `opentelemetry-exporter-otlp` |
-| `ActivitySource` / `Activity` | `trace.get_tracer(__name__)` / spans |
+| `opentelemetry-instrumentation-fastapi` | incoming HTTP requests (server spans) |
+| `opentelemetry-instrumentation-sqlalchemy` | SQL statements |
+| `opentelemetry-instrumentation-pymongo` | Mongo commands |
+| `opentelemetry-instrumentation-httpx` | outgoing HTTP calls |
+| `opentelemetry-exporter-otlp` | ships spans to an OTLP collector |
 
 ## 2. Setup module
 
-Create `src/carsties/shared/telemetry.py` — the ≈ of the `AddOpenTelemetry()`
-block in `Program.cs`:
+Create `src/carsties/shared/telemetry.py` — one function that wires the whole
+tracing pipeline:
 
 ```python
-"""≈ builder.Services.AddOpenTelemetry() — tracing + metrics setup."""
+"""Tracing + metrics setup."""
 
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
@@ -72,18 +71,18 @@ Notes:
   async engine is a wrapper around it).
 - Pymongo instrumentation covers the `AsyncMongoClient` used by the search module.
 - Configuration follows the standard env vars: `OTEL_EXPORTER_OTLP_ENDPOINT`,
-  `OTEL_SERVICE_NAME`, `OTEL_TRACES_SAMPLER` — same ones .NET honours.
+  `OTEL_SERVICE_NAME`, `OTEL_TRACES_SAMPLER`.
 
 ## 3. Tracing across the outbox / event bus
 
 Auto-instrumentation stops at the HTTP request. The interesting Carsties trace —
 `POST /api/auctions` → outbox commit → poller → search consumer → Mongo write —
-crosses an async boundary, exactly like a MassTransit publish/consume pair. Two
-additions make it one connected trace:
+crosses an async boundary, like any publish/consume pair on a message broker.
+Two additions make it one connected trace:
 
-**a. Store the trace context in the outbox row** (≈ MassTransit propagating
-`traceparent` in message headers). Add a `trace_context` column (or reuse a JSON
-`headers` column) and capture it in `outbox.enqueue`:
+**a. Store the trace context in the outbox row** (the same trick brokers use:
+propagating `traceparent` in message headers). Add a `trace_context` column (or
+reuse a JSON `headers` column) and capture it in `outbox.enqueue`:
 
 ```python
 from opentelemetry.propagate import inject
@@ -138,7 +137,7 @@ that's the default) and traces appear in the Jaeger UI.
 ## 5. What to add spans for manually
 
 Auto-instrumentation covers HTTP/SQL/Mongo. Worth a manual span (a
-`tracer.start_as_current_span(...)` context manager, ≈ `ActivitySource.StartActivity`):
+`tracer.start_as_current_span(...)` context manager):
 
 - each event-bus handler (see §3) — it's your "consumer" span
 - the startup search sync (`modules/search/application/sync.py`) — it can be slow

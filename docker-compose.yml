@@ -16,8 +16,7 @@ services:
     volumes:
       - mongodata:/data/db
 
-  # ≈ Carsties.IdentityService (Duende IdentityServer). Keycloak plays the
-  # external OIDC provider; the app only validates its JWTs.
+  # Keycloak is the external OIDC provider; the app only validates its JWTs.
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     command: start-dev --import-realm

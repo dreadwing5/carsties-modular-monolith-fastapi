@@ -1,23 +1,21 @@
 # Do we need the Repository pattern?
 
-**No — and for the same reason you didn't need it in the .NET version.**
+**No — because SQLAlchemy's `Session` already is one.**
 
-The .NET AuctionService injected `AuctionDbContext` straight into its minimal
-API endpoints. Nobody wrapped EF Core in `IAuctionRepository`, because EF Core's
-`DbContext`/`DbSet` **already is** a repository + unit of work. The exact same
-argument holds here, because SQLAlchemy's `Session` is the same abstraction:
+Wrapping the ORM in an `AuctionRepository` interface adds nothing here: the
+`Session` **already is** a repository + unit of work.
 
-| Repository/UoW concern | EF Core | SQLAlchemy |
-|---|---|---|
-| Collection-like access to aggregates | `DbSet<Auction>` | `session.get(Auction, id)`, `select(Auction)` |
-| Change tracking | `ChangeTracker` | identity map + attribute history |
-| Unit of work / atomic commit | `SaveChanges()` | `session.commit()` (flush = one transaction) |
-| Deferred execution / composition | `IQueryable` | `select()` constructs, composable before execution |
+| Repository/UoW concern | SQLAlchemy |
+|---|---|
+| Collection-like access to aggregates | `session.get(Auction, id)`, `select(Auction)` |
+| Change tracking | identity map + attribute history |
+| Unit of work / atomic commit | `session.commit()` (flush = one transaction) |
+| Deferred execution / composition | `select()` constructs, composable before execution |
 
-Wrapping one generic repository in another (`IRepository<T>` over `DbSet<T>`,
-or `AuctionRepository` over `Session`) adds a layer that forwards calls and
-slowly re-grows the ORM's API one method at a time (`get_by_id_with_item`,
-`get_by_seller_ordered_by_make`, …). That's ceremony, not architecture.
+Wrapping one repository abstraction in another (`AuctionRepository` over
+`Session`) adds a layer that forwards calls and slowly re-grows the ORM's API
+one method at a time (`get_by_id_with_item`, `get_by_seller_ordered_by_make`,
+…). That's ceremony, not architecture.
 
 ## What this codebase does instead
 
@@ -25,15 +23,14 @@ slowly re-grows the ORM's API one method at a time (`get_by_id_with_item`,
   `Session` beyond passing it in; all queries and mutations live in service
   functions (`service.create`, `service.get_all`, …). That's the layer you'd
   have put repositories behind — with none of the indirection.
-- **import-linter enforces it** (`api → application → infrastructure → domain`).
-  In .NET the compiler stopped `Api` referencing `Infrastructure`; here the
-  linter does. You don't need an interface to hide the ORM when the architecture
-  rule *forbids reaching around the service layer* outright.
+- **import-linter enforces it** (`api → application → infrastructure → domain`),
+  making the layering a build failure rather than a convention. You don't need
+  an interface to hide the ORM when the architecture rule *forbids reaching
+  around the service layer* outright.
 - **`search/infrastructure/repository.py` is not the Repository pattern** —
   there's no interface, no abstraction, no swap-ability promise. It's just a
-  module of data-access functions for Mongo (the .NET version's
-  `MongoDB.Entities` calls, grouped in one file). The name is descriptive, not
-  ceremonial.
+  module of data-access functions for Mongo, grouped in one file. The name is
+  descriptive, not ceremonial.
 
 ## When a real repository *would* earn its keep
 
@@ -54,9 +51,9 @@ Reach for the pattern only when you have the problem it solves:
 
 If one module eventually earns it (say a future `bidding` module with real
 invariants), add a repository **in that module only**. Modular monolith rule:
-patterns are per-module decisions, not repo-wide mandates — the .NET reference
-repo (kgrzybek) does exactly this, and the doc this project follows says the
-same: *"add domain/application layers only where the business logic earns it."*
+patterns are per-module decisions, not repo-wide mandates — as the doc this
+project follows puts it: *"add domain/application layers only where the
+business logic earns it."*
 
 ## The audit corollary
 

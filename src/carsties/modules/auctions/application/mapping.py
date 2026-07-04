@@ -1,4 +1,4 @@
-"""≈ AuctionMappingProfile — entity → integration event mapping.
+"""Entity → integration event mapping.
 
 Entity → AuctionCreated lives in contract.py (the snapshot query needs it too);
 this module adds the write-side mappings used by the service.

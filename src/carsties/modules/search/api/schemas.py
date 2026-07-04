@@ -1,4 +1,4 @@
-"""≈ SearchService's Item model + the anonymous paged result shape."""
+"""Response shapes of the search API — the item document + paged result."""
 
 from datetime import datetime
 from typing import Any

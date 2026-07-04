@@ -1,4 +1,4 @@
-"""Wire-format parity: the JSON shapes must match the .NET camelCase DTOs."""
+"""Wire-format tests: the camelCase JSON shapes must stay stable."""
 
 from datetime import UTC, datetime
 from uuid import UUID

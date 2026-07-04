@@ -1,4 +1,4 @@
-"""initial create — ≈ 20250907060526_InitialCreate
+"""initial create — auctions schema, auctions + items tables
 
 Revision ID: 0001
 Revises:

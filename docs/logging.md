@@ -1,9 +1,8 @@
 # Logging Practices
 
-The .NET services used `ILogger<T>` (with Serilog being the usual upgrade for
-structured output + enrichers). The Python equivalent is **structlog** layered
-over stdlib `logging`. The goal is the same: every log line is a structured
-event carrying the request/user/trace context, not an interpolated string.
+This codebase uses **structlog** layered over stdlib `logging`. The goal:
+every log line is a structured event carrying the request/user/trace context,
+not an interpolated string.
 
 ## 1. Principles (framework-agnostic)
 
@@ -15,7 +14,7 @@ event carrying the request/user/trace context, not an interpolated string.
 - **Levels:** `DEBUG` local diagnosis · `INFO` state changes / business events
   (created, deleted, consumed) · `WARNING` handled anomalies (retry, 4xx-worthy
   input) · `ERROR` failed operation with stack trace · never log-and-rethrow
-  (one exception, one log — the same rule as .NET).
+  (one exception, one log).
 - **Never log secrets or tokens.** JWTs, passwords, connection strings. Log the
   *username*, not the token that proved it.
 - **Human-readable console in dev, JSON in prod.** Same events, different renderer.
@@ -34,7 +33,7 @@ Create `src/carsties/shared/logging.py` and call `configure_logging()` first
 thing in `main.py` (replacing the current `logging.basicConfig`):
 
 ```python
-"""≈ Serilog configuration + enrichers."""
+"""Logging configuration — processors, renderer, level filtering."""
 
 import logging
 import structlog
@@ -59,7 +58,7 @@ def configure_logging(json_output: bool = False) -> None:
     )
 ```
 
-Usage — same shape everywhere, module-level logger like `ILogger<T>`:
+Usage — same shape everywhere, one module-level logger per file:
 
 ```python
 import structlog
@@ -73,9 +72,8 @@ logger.exception("outbox_poll_failed")   # ERROR + stack trace
 
 ## 3. Request context: bind once per request
 
-`structlog.contextvars` is the ≈ of Serilog's `LogContext.PushProperty` — it uses
-Python `ContextVar`s, which flow correctly through `async`/`await` (like
-`AsyncLocal<T>` in .NET). One middleware binds the fields; every log line in
+`structlog.contextvars` uses Python `ContextVar`s, which flow correctly
+through `async`/`await`. One middleware binds the fields; every log line in
 that request — including inside SQLAlchemy or consumer code — carries them:
 
 ```python
@@ -144,8 +142,8 @@ logging.getLogger("uvicorn.access").setLevel(logging.WARNING)   # our middleware
 logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)  # INFO = every SQL statement
 ```
 
-Turn `sqlalchemy.engine` up to `INFO` temporarily when you need to see queries —
-it's the ≈ of EF Core's `Microsoft.EntityFrameworkCore.Database.Command` category.
+Turn `sqlalchemy.engine` up to `INFO` temporarily when you need to see every
+SQL statement the app issues.
 
 ## 6. What good looks like here
 

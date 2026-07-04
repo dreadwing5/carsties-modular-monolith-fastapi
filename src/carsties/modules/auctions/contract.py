@@ -1,7 +1,7 @@
-"""Public façade of the auctions module — ≈ Carsties.Contracts (integration
-events) plus the module's public query API. This file is the ONLY thing other
-modules may import (enforced by .importlinter). It depends only on the domain
-layer, so importing it never drags in another layer.
+"""Public façade of the auctions module — its integration events plus its
+public query API. This file is the ONLY thing other modules may import
+(enforced by .importlinter). It depends only on the domain layer, so
+importing it never drags in another layer.
 """
 
 from datetime import datetime
@@ -71,9 +71,9 @@ def to_auction_created(auction: Auction) -> AuctionCreated:
 async def get_auctions(
     session: AsyncSession, since: datetime | None = None
 ) -> list[AuctionCreated]:
-    """Public query — ≈ the GET /api/auctions?date= call the .NET SearchService
-    made over HTTP (AuctionSvcHttpClient); in the monolith it is a direct call
-    through the contract, which is fine for reads.
+    """Public query — lets the search module sync its read model. Between
+    separate services this would be an HTTP call; in the monolith it is a
+    direct call through the contract, which is fine for reads.
     """
     query = select(Auction).join(Auction.item).order_by(Item.make)
     if since is not None:

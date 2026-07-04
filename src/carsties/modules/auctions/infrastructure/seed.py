@@ -1,5 +1,5 @@
-"""≈ Carsties.AuctionService.Data.DbInitializer — migrate, then seed the same
-ten auctions (same GUIDs) the .NET service ships with.
+"""Auctions DB initializer — migrate, then seed ten demo auctions with
+stable UUIDs (so re-seeding is idempotent).
 """
 
 import asyncio
@@ -21,7 +21,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[5]
 
 
 def _migrate() -> None:
-    """≈ context.Database.Migrate()."""
+    """Apply the Alembic migrations up to head."""
     config = Config(PROJECT_ROOT / "alembic.ini")
     config.set_main_option("script_location", str(PROJECT_ROOT / "alembic"))
     command.upgrade(config, "head")

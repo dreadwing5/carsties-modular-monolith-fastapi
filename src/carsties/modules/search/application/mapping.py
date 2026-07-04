@@ -1,4 +1,4 @@
-"""≈ SearchMappingProfile — integration events → search read-model documents."""
+"""Integration events → search read-model documents."""
 
 from typing import Any
 
@@ -27,7 +27,7 @@ def item_from_created(event: AuctionCreated) -> dict[str, Any]:
 
 
 def fields_from_updated(event: AuctionUpdated) -> dict[str, Any]:
-    """≈ the ModifyOnly(...) projection in AuctionUpdatedConsumer."""
+    """Only the item fields an update may change — never price/status."""
     return {
         "make": event.make,
         "model": event.model,

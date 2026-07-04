@@ -1,4 +1,4 @@
-"""≈ Carsties.AuctionService.Consumers.AuctionCreatedFaultConsumer."""
+"""Fault consumer — reacts to AuctionCreated events whose handlers failed."""
 
 import logging
 

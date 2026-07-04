@@ -1,9 +1,9 @@
-"""≈ Carsties.SearchService's DbInitializer + AuctionSvcHttpClient.
+"""Startup sync of the search read model.
 
 On startup the read model catches up on anything it missed: it asks the
-auctions module for every auction updated since the newest item it holds. In
-the microservices version this was an HTTP call with a Polly retry-forever
-policy; in the monolith it is a direct call through the auctions contract.
+auctions module for every auction updated since the newest item it holds.
+Between separate services this would be an HTTP call with a retry policy; in
+the monolith it is a direct call through the auctions contract.
 """
 
 import logging

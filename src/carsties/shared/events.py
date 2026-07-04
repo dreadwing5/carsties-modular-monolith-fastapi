@@ -1,14 +1,14 @@
-"""≈ MassTransit + RabbitMQ, collapsed to an in-process event bus.
+"""In-process event bus (pub/sub between modules).
 
 Modules publish integration events (defined in their contract.py) and other
 modules subscribe. Handlers are the same shape they would be as RabbitMQ
 consumers, so extracting a module to a microservice later means swapping this
 bus for a real broker (e.g. FastStream) without touching the handlers.
 
-Failure semantics mirror MassTransit:
-- a subscription may declare retries (≈ UseMessageRetry on the endpoint)
-- when a handler still fails, a Fault[event] is published (≈ Fault<T>),
-  which other handlers may consume (see auctions' fault consumer).
+Failure semantics:
+- a subscription may declare retries
+- when a handler still fails, a Fault[event] is published, which other
+  handlers may consume (see auctions' fault consumer).
 """
 
 import asyncio
@@ -24,7 +24,7 @@ Handler = Callable[[Any], Awaitable[None]]
 
 @dataclass
 class Fault:
-    """≈ MassTransit Fault<T> — wraps the failed message and its exception."""
+    """Wraps a message that failed all retries, together with its exception."""
 
     message: Any
     exception: Exception

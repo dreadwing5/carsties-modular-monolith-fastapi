@@ -1,4 +1,4 @@
-"""≈ appsettings.json + IOptions<T> — typed settings from env vars / .env."""
+"""Typed application settings loaded from env vars / .env."""
 
 from functools import lru_cache
 
@@ -12,10 +12,10 @@ class Settings(BaseSettings):
     mongodb_url: str = "mongodb://localhost:27017"
     mongodb_database: str = "search_db"
 
-    # ≈ IdentityServerUrl. Keycloak realm acts as the OIDC authority.
+    # The Keycloak realm acting as the OIDC authority.
     identity_server_url: str = "http://localhost:5001/realms/carsties"
 
-    # ≈ MassTransit outbox QueryDelay
+    # How often the outbox poller dispatches pending events
     outbox_poll_interval_seconds: float = 10.0
 
     seed_database: bool = True

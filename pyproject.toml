@@ -1,7 +1,7 @@
 [project]
 name = "carsties"
 version = "0.1.0"
-description = "Carsties auction app — Python/FastAPI modular monolith replica of the .NET microservices tutorial"
+description = "Carsties auction app — a Python/FastAPI modular monolith"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

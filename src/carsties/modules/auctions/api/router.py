@@ -1,4 +1,4 @@
-"""≈ Carsties.AuctionService.Endpoints.AuctionEndpoints (Carter module)."""
+"""HTTP endpoints of the auctions module."""
 
 from datetime import datetime
 from typing import Annotated

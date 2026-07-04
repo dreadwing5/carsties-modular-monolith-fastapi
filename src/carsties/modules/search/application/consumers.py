@@ -1,5 +1,5 @@
-"""≈ Carsties.SearchService.Consumers — the same three consumers, subscribed to
-the in-process event bus instead of RabbitMQ endpoints.
+"""Event consumers that keep the search read model in sync, subscribed to the
+in-process event bus.
 """
 
 import logging
@@ -41,7 +41,7 @@ async def on_auction_deleted(event: AuctionDeleted) -> None:
 
 
 def register_consumers(bus: EventBus) -> None:
-    # ≈ the search-auction-created endpoint's UseMessageRetry(5 x 5s)
+    # Created events retry (5 x 5s) so a slow Mongo start doesn't drop them
     bus.subscribe(AuctionCreated, on_auction_created, retries=5, retry_delay=5.0)
     bus.subscribe(AuctionUpdated, on_auction_updated)
     bus.subscribe(AuctionDeleted, on_auction_deleted)

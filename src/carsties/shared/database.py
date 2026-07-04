@@ -1,4 +1,4 @@
-"""≈ EF Core DbContext plumbing — async engine, session factory, declarative Base."""
+"""Database plumbing — async engine, session factory, declarative Base."""
 
 from collections.abc import AsyncIterator
 
@@ -36,7 +36,7 @@ def get_session_factory() -> async_sessionmaker[AsyncSession]:
 
 
 async def get_session() -> AsyncIterator[AsyncSession]:
-    """FastAPI dependency — one session per request (≈ scoped DbContext)."""
+    """FastAPI dependency — one session per request."""
     async with get_session_factory()() as session:
         yield session
 

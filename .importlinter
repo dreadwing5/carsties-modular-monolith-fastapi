@@ -1,8 +1,8 @@
 [importlinter]
 root_package = carsties
 
-; ≈ the .NET project-reference graph: modules may not import each other's
-; internals — only contract.py (the "IntegrationEvents / public API" surface).
+; Modules may not import each other's internals — only contract.py
+; (each module's public API surface).
 [importlinter:contract:module-independence]
 name = Modules are independent (contract.py only)
 type = independence

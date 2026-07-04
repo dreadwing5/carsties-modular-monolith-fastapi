@@ -1,34 +1,33 @@
 # Carsties — Python Modular Monolith
 
-A Python/FastAPI replica of the [Carsties .NET microservices tutorial](../carsties-microservices),
-restructured as a **modular monolith** following the mapping in
-[`docs/python_modular_monolith.md`](../carsties-microservices/docs/python_modular_monolith.md):
+A car-auction app built with Python/FastAPI as a **modular monolith**,
+following the approach in [`docs/python_modular_monolith.md`](docs/python_modular_monolith.md):
 one deployable, hard module boundaries, and integration events — so extracting a
-module back out to a microservice later is mechanical.
+module out to a microservice later is mechanical.
 
-## How the .NET services map here
+## Architecture
 
-| .NET microservice | Here | Notes |
+| Piece | Where | Notes |
 |---|---|---|
-| `Carsties.AuctionService` | `modules/auctions` | FastAPI router + SQLAlchemy (Postgres `auctions` schema) + Alembic; outbox table + poller replaces the MassTransit EF outbox |
-| `Carsties.SearchService` | `modules/search` | MongoDB read model; consumers subscribe to the in-process event bus instead of RabbitMQ |
-| `Carsties.IdentityService` (Duende) | Keycloak container | External OIDC provider; the app only validates its JWTs (`shared/auth.py`) |
-| `Carsties.GatewayService` (YARP) | `src/carsties/gateway.py` | Same public route table as YARP, as an ASGI middleware: path rewrite + bearer-required on writes, no network hop |
-| `Carsties.Contracts` | each module's `contract.py` | The only file other modules may import — enforced by import-linter |
-| MassTransit + RabbitMQ | `shared/events.py` | In-process pub/sub with retries and `Fault` publishing; swap for FastStream/RabbitMQ to go back to microservices |
+| Auctions module (write model) | `modules/auctions` | FastAPI router + SQLAlchemy (Postgres `auctions` schema) + Alembic; integration events go through an outbox table + poller |
+| Search module (read model) | `modules/search` | MongoDB read model kept in sync by consumers on the in-process event bus |
+| Identity | Keycloak container | External OIDC provider; the app only validates its JWTs (`shared/auth.py`) |
+| Gateway | `src/carsties/gateway.py` | The public route table as an ASGI middleware: path rewrite + bearer-required on writes, no network hop |
+| Module contracts | each module's `contract.py` | The only file other modules may import — enforced by import-linter |
+| Event bus | `shared/events.py` | In-process pub/sub with retries and `Fault` publishing; swap for a real broker (e.g. FastStream/RabbitMQ) to go to microservices |
 
 ## Project layout
 
 ```
-├── pyproject.toml           # ≈ .sln + Directory.Build.props (uv project)
-├── .importlinter            # ≈ project-reference rules — module boundaries in CI
-├── alembic/                 # ≈ EF Core migrations (InitialCreate, Outbox)
+├── pyproject.toml           # project + dependency config (uv project)
+├── .importlinter            # module-boundary rules, enforced in CI
+├── alembic/                 # database migrations (InitialCreate, Outbox)
 ├── docker-compose.yml       # postgres, mongodb, keycloak
 ├── keycloak/                # realm import: users alice/bob/tom, client "postman"
 ├── .vscode/                 # debug config, tasks, recommended extensions
 ├── src/carsties/
-│   ├── main.py              # ≈ Program.cs
-│   ├── shared/              # ≈ SharedKernel: settings, db, event bus, auth
+│   ├── main.py              # app entry point: routers, consumers, lifespan
+│   ├── shared/              # shared kernel: settings, db, event bus, auth
 │   └── modules/
 │       ├── auctions/        # api / application / infrastructure / domain / contract.py
 │       └── search/          # api / application / infrastructure / contract.py
@@ -40,9 +39,6 @@ module back out to a microservice later is mechanical.
 - **Python 3.12+** — [download](https://www.python.org/downloads/)
 - **Docker Desktop** — [download](https://www.docker.com/products/docker-desktop/)
 - **[uv](https://docs.astral.sh/uv/)** (recommended) — `pip install uv`, or use plain `pip` (see below)
-
-> ⚠️ The .NET Carsties repo's docker-compose binds the same host ports
-> (Postgres `5433`, Mongo `27017`). Stop that stack before starting this one.
 
 ## Running it
 
@@ -88,10 +84,10 @@ pip install -e . --group dev
 
 On startup the app:
 
-1. runs the Alembic migrations (≈ `Database.Migrate()`),
-2. seeds the same ten auctions as the .NET version (same GUIDs),
+1. runs the Alembic migrations,
+2. seeds ten demo auctions (stable UUIDs, so re-seeding is idempotent),
 3. creates the Mongo text index and syncs the search read model from the auctions module,
-4. starts the outbox poller (every 10 s, ≈ MassTransit `QueryDelay`).
+4. starts the outbox poller (every 10 s).
 
 Open **Swagger UI** at <http://localhost:8000/docs>.
 
@@ -105,7 +101,7 @@ curl "http://localhost:8000/api/search?searchTerm=ford&orderBy=make&pageSize=10"
 curl http://localhost:8000/health
 ```
 
-The **gateway routes** (≈ the YARP GatewayService — what a frontend would call)
+The **gateway routes** (the public surface a frontend would call)
 are served by the same app:
 
 | Route | Methods | Forwards to | Auth |
@@ -119,8 +115,8 @@ curl http://localhost:8000/auctions
 curl "http://localhost:8000/search?searchTerm=ford"
 ```
 
-Get a token (same resource-owner-password flow the .NET version exposed for
-Postman; users `alice` / `bob` / `tom`, password `Pass123$`):
+Get a token (resource-owner-password flow, handy for Postman/curl;
+users `alice` / `bob` / `tom`, password `Pass123$`):
 
 ```bash
 curl -X POST http://localhost:5001/realms/carsties/protocol/openid-connect/token \
@@ -142,25 +138,25 @@ curl -X POST http://localhost:8000/api/auctions \
 Within ~10 s the outbox poller publishes `AuctionCreated`, the search consumer
 upserts Mongo, and the car shows up in `GET /api/search?searchTerm=tesla`.
 Only the seller can `PUT`/`DELETE` their auction (401 without a token,
-403 as the wrong user) — same rules as the .NET service.
+403 as the wrong user).
 
 ### The event flow
 
 ```
 POST /api/auctions
   └─ auction row + AuctionCreated outbox row      (one Postgres transaction)
-       └─ outbox poller (10s)                      ≈ MassTransit outbox delivery
-            └─ event bus                           ≈ RabbitMQ
-                 └─ search consumer → MongoDB      ≈ SearchService consumer
+       └─ outbox poller (10s)                      at-least-once delivery
+            └─ event bus                           in-process pub/sub
+                 └─ search consumer → MongoDB      read model updated
                       └─ GET /api/search
 ```
 
 ## Checks
 
 ```bash
-.venv\Scripts\lint-imports              # ≈ compiler-enforced project references
+.venv\Scripts\lint-imports              # module boundaries (import-linter)
 .venv\Scripts\ruff check .              # lint + import order
-.venv\Scripts\python -m mypy src        # strict typing (≈ the C# compiler)
+.venv\Scripts\python -m mypy src        # strict typing
 .venv\Scripts\python -m pytest          # unit tests
 ```
 
@@ -194,7 +190,6 @@ The [`docs/`](docs/README.md) folder has guides for the next steps:
 
 - **`invalid_scope` from Keycloak** — the realm didn't import (e.g. the container
   existed before the realm file): `docker compose up -d --force-recreate keycloak`.
-- **Port already in use** — stop the .NET Carsties compose stack (shares 5433/27017),
-  or anything else on 5001/8000.
+- **Port already in use** — stop whatever else is bound to 5433/27017/5001/8000.
 - **Start completely fresh** — `docker compose down -v` wipes the Postgres and
   Mongo volumes; the app re-migrates and re-seeds on next startup.

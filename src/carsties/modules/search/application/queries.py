@@ -1,7 +1,6 @@
-"""Search query construction — the pure-logic core of SearchEndpoints.SearchItems.
+"""Search query construction — the pure-logic core of the search endpoint.
 
-Kept free of Mongo I/O so the sort/filter parity with the .NET version is unit
-testable.
+Kept free of Mongo I/O so the sort/filter behavior is unit testable.
 """
 
 from datetime import datetime, timedelta
@@ -27,7 +26,7 @@ def build_search(
 
     if search_term:
         query_filter["$text"] = {"$search": search_term}
-        sort.append(("score", {"$meta": "textScore"}))  # ≈ SortByTextScore
+        sort.append(("score", {"$meta": "textScore"}))  # best text match first
 
     match order_by:
         case "make":

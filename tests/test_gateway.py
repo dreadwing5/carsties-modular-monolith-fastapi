@@ -1,4 +1,4 @@
-"""Parity tests against the .NET GatewayService (YARP) route table."""
+"""Tests for the gateway route table and middleware."""
 
 import httpx
 from fastapi import FastAPI, Request

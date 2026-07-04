@@ -1,4 +1,4 @@
-"""Parity tests against the .NET SearchEndpoints sort/filter behavior."""
+"""Tests for the search endpoint's sort/filter behavior."""
 
 from datetime import UTC, datetime, timedelta
 

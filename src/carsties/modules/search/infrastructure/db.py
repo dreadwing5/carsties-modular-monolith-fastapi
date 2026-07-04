@@ -1,6 +1,4 @@
-"""≈ MongoDB.Entities DB.InitAsync + the text index from SearchService's
-DbInitializer.
-"""
+"""Mongo client setup + the text index the search queries rely on."""
 
 from typing import Any
 

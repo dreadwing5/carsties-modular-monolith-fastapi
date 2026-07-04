@@ -1,4 +1,4 @@
-"""≈ Carsties.SearchService.Endpoints.SearchEndpoints."""
+"""HTTP endpoints of the search module."""
 
 from datetime import UTC, datetime
 from typing import Annotated

@@ -1,21 +1,20 @@
-"""≈ Carsties.GatewayService — the YARP reverse proxy, collapsed into an ASGI
-middleware.
+"""The API gateway, collapsed into an ASGI middleware.
 
-In the microservices version YARP exposes the public route surface
-(/auctions, /search), rewrites paths to each service's /api/... prefix, and
-requires an authenticated user on auction writes before proxying. In the
-monolith there is no second host to proxy to, so the same route table becomes
-a path rewrite in front of the module routers:
+A distributed deployment would put a reverse proxy in front of the services to
+expose the public route surface (/auctions, /search), rewrite paths to each
+service's /api/... prefix, and require an authenticated user on auction writes
+before proxying. In the monolith there is no second host to proxy to, so the
+same route table becomes a path rewrite in front of the module routers:
 
     GET               /auctions/**  ->  /api/auctions/**   (anonymous)
     POST|PUT|DELETE   /auctions/**  ->  /api/auctions/**   (bearer required)
     GET               /search/**    ->  /api/search/**     (anonymous)
 
 Anything that matches no route falls through untouched (and 404s, exactly like
-YARP with no matching route). The edge check only requires that a bearer token
-is *present* (≈ YARP rejecting anonymous requests); full validation of the
-token still happens in the endpoint's auth dependency, so an invalid token is
-still a 401 — just one layer deeper.
+a reverse proxy with no matching route). The edge check only requires that a
+bearer token is *present*; full validation of the token still happens in the
+endpoint's auth dependency, so an invalid token is still a 401 — just one
+layer deeper.
 """
 
 from starlette.types import ASGIApp, Receive, Scope, Send

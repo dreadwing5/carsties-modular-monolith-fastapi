@@ -1,4 +1,4 @@
-"""Application-layer commands (≈ the write-side DTOs handed to MediatR)."""
+"""Application-layer commands — the write-side payloads handed to the service."""
 
 from dataclasses import dataclass
 from datetime import datetime

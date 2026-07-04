@@ -1,4 +1,4 @@
-"""≈ Carsties.AuctionService.Entities — Auction, Item, Status.
+"""Auctions domain model — Auction, Item, Status.
 
 Tables live in the "auctions" Postgres schema: one database, one schema per
 module, so no other module can join across these tables.

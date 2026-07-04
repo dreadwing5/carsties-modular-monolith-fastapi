@@ -1,6 +1,6 @@
-"""≈ Carsties.AuctionService.DTOs — Pydantic replaces DTO classes,
-FluentValidation and AutoMapper. camelCase aliases keep the wire format
-identical to the .NET JSON output.
+"""Request/response DTOs for the auctions API. Pydantic handles the shapes,
+validation and ORM mapping; camelCase aliases keep the JSON wire format
+frontend-friendly.
 """
 
 from datetime import datetime

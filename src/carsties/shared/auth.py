@@ -1,9 +1,8 @@
-"""≈ AddAuthentication().AddJwtBearer() — validates JWTs issued by the external
-OIDC provider (Keycloak, standing in for Duende IdentityServer).
+"""JWT bearer authentication — validates tokens issued by the external OIDC
+provider (Keycloak).
 
-`CurrentUsername` is the equivalent of the .NET `ICurrentUser` service plus the
-`UserWithUsername` authorization policy: it 401s without a valid bearer token
-and 403s if the token carries no username.
+`CurrentUsername` is the "current user" dependency: it 401s without a valid
+bearer token and 403s if the token carries no username.
 """
 
 from functools import lru_cache
@@ -31,7 +30,7 @@ def _decode(token: str) -> dict[str, Any]:
         signing_key.key,
         algorithms=["RS256"],
         issuer=get_settings().identity_server_url,
-        # ≈ TokenValidationParameters.ValidateAudience = false
+        # Any audience is accepted; only issuer + signature are validated
         options={"verify_aud": False},
     )
 
@@ -54,10 +53,10 @@ def get_current_username(
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
-    # ≈ NameClaimType = "username"; Keycloak calls it preferred_username
+    # Keycloak puts the username in preferred_username
     username = claims.get("preferred_username") or claims.get("username") or ""
     if not username.strip():
-        # ≈ the UserWithUsername policy assertion failing -> Forbid
+        # Authenticated but unusable token (no username) -> Forbid
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     return username
 

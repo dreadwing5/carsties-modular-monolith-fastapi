@@ -1,5 +1,5 @@
-"""≈ Program.cs — builds the app, wires module routers, consumers and hosted
-services (outbox poller), and runs the DB initializers.
+"""Application entry point — builds the app, wires module routers, consumers
+and background services (outbox poller), and runs the DB initializers.
 """
 
 import asyncio
@@ -33,11 +33,11 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # ≈ MassTransit consumer registration
+    # Subscribe each module's consumers to the in-process event bus
     register_search_consumers(event_bus)
     register_auctions_consumers(event_bus)
 
-    # ≈ DbInitializer.InitDb in each service's Program.cs
+    # Run each module's DB initializer (migrate + seed)
     if get_settings().seed_database:
         try:
             await init_auctions_db()
@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         except Exception:
             logger.exception("Search DB init failed")
 
-    # ≈ the MassTransit outbox delivery service (IHostedService)
+    # Background task that delivers outbox messages to the event bus
     poller = asyncio.create_task(outbox.poll_outbox_forever())
 
     yield
@@ -62,7 +62,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Carsties", lifespan=lifespan)
 
-# ≈ Carsties.GatewayService (YARP): public /auctions and /search routes
+# Gateway edge: public /auctions and /search routes
 app.add_middleware(GatewayMiddleware)
 
 app.include_router(auctions_router)

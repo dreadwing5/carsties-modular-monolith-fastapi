@@ -1,6 +1,6 @@
-"""≈ the handler bodies of Carsties.AuctionService.Endpoints.AuctionEndpoints —
-business logic extracted to the application layer. Events go through the
-outbox in the same transaction as the change (≈ MassTransit EF outbox).
+"""Business logic of the auctions endpoints, extracted to the application
+layer. Integration events go through the outbox in the same transaction as
+the business change.
 """
 
 from datetime import UTC, datetime
@@ -31,7 +31,7 @@ class NotAuctionSellerError(Exception):
 
 
 def as_utc(value: datetime) -> datetime:
-    """≈ DateTime.Parse(...).ToUniversalTime() — treat naive datetimes as UTC."""
+    """Normalize to UTC — naive datetimes are treated as already-UTC."""
     return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
 
 

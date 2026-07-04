@@ -1,4 +1,4 @@
-"""Mongo persistence for the search read model (≈ MongoDB.Entities calls)."""
+"""Mongo persistence for the search read model."""
 
 import math
 from datetime import datetime
@@ -33,7 +33,7 @@ async def latest_updated_at() -> datetime | None:
 async def paged_search(
     query_filter: Document, sort: Sort, page_number: int, page_size: int
 ) -> tuple[list[Document], int, int]:
-    """≈ MongoDB.Entities PagedSearch — (results, page_count, total_count)."""
+    """Paged search — returns (results, page_count, total_count)."""
     items = get_items()
     total_count = await items.count_documents(query_filter)
 

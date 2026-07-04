@@ -4,19 +4,18 @@ Goal: answer questions like *"who created this auction?"*, *"what did bob do
 yesterday?"*, *"when was auction X deleted, and by whom?"* — **without adding an
 `audit(...)` call inside every endpoint or service function.**
 
-The trick is the same one you'd use in .NET: don't instrument the actions,
-instrument the **chokepoint they all pass through**. In EF Core that's a
-`SaveChangesInterceptor`; in SQLAlchemy it's the **session flush events**. Every
+The trick: don't instrument the actions, instrument the **chokepoint they all
+pass through**. In SQLAlchemy that's the **session flush events**. Every
 insert, update and delete — current and future — flows through flush, so one
 listener audits the whole write model forever.
 
 ## The three options
 
-| Approach | ≈ .NET | Catches | Misses | Actor |
-|---|---|---|---|---|
-| **A. SQLAlchemy flush listener** (recommended) | `SaveChangesInterceptor` | every ORM insert/update/delete, incl. field-level diffs | raw SQL (`session.execute(update(...))`) | from a request-scoped `ContextVar` |
-| B. Event-bus subscriber | audit consumer on RabbitMQ | business events (`AuctionCreated`, …) | actions that don't publish events; field diffs | only what the event carries |
-| C. Postgres triggers | DB triggers / temporal tables | *everything*, even psql | app context (user, request id) unless smuggled via `SET LOCAL` | hard |
+| Approach | Catches | Misses | Actor |
+|---|---|---|---|
+| **A. SQLAlchemy flush listener** (recommended) | every ORM insert/update/delete, incl. field-level diffs | raw SQL (`session.execute(update(...))`) | from a request-scoped `ContextVar` |
+| B. Event-bus subscriber | business events (`AuctionCreated`, …) | actions that don't publish events; field diffs | only what the event carries |
+| C. Postgres triggers | *everything*, even psql | app context (user, request id) unless smuggled via `SET LOCAL` | hard |
 
 Use **A** as the backbone. Add **B** later if you want a *business-language*
 audit ("auction won", "bid rejected") on top of the *data-language* one — it's a
@@ -31,8 +30,8 @@ line in `auth.py`.
 
 ### 1. Request-scoped actor — `shared/request_context.py`
 
-A `ContextVar` flows through `async/await` like `AsyncLocal<T>` (this is also
-what `ICurrentUser`/`IHttpContextAccessor` gave you):
+A `ContextVar` flows correctly through `async/await`, so a value set at the
+edge of a request is visible everywhere inside it:
 
 ```python
 from contextvars import ContextVar

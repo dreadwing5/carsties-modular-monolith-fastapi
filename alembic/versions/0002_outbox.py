@@ -1,4 +1,4 @@
-"""outbox — ≈ 20260614031917_Outbox (MassTransit EF outbox tables)
+"""outbox — the transactional outbox table
 
 Revision ID: 0002
 Revises: 0001

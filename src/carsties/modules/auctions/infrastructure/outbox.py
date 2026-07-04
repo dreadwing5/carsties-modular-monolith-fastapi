@@ -1,9 +1,9 @@
-"""≈ MassTransit's EF Core outbox (UseBusOutbox + QueryDelay).
+"""Transactional outbox.
 
 Integration events are written to an outbox table inside the same transaction
 as the business change; a background poller then publishes them to the event
 bus. If the process dies between commit and publish, the event is picked up on
-the next poll — at-least-once delivery, exactly like the .NET original.
+the next poll — at-least-once delivery.
 """
 
 import asyncio
@@ -43,7 +43,7 @@ class OutboxMessage(Base):
 
 
 def enqueue(session: AsyncSession, event: BaseModel) -> None:
-    """≈ IPublishEndpoint.Publish — stages the event in the caller's transaction."""
+    """Stage an event for publication inside the caller's transaction."""
     session.add(
         OutboxMessage(event_type=type(event).__name__, payload=event.model_dump_json())
     )
